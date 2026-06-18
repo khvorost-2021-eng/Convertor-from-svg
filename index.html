@@ -16,7 +16,7 @@
             color: #333;
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            min-height: 100vh;
         }
         h1 {
             text-align: center;
@@ -29,7 +29,7 @@
             display: flex;
             flex: 1;
             gap: 20px;
-            min-height: 0; /* Важно для корректного скролла внутри флекс-элементов */
+            min-height: 0;
         }
         .panel {
             flex: 1;
@@ -52,6 +52,7 @@
         textarea {
             flex: 1;
             width: 100%;
+            min-height: 200px;
             border: 1px solid #e1e4e8;
             border-radius: 8px;
             padding: 12px;
@@ -67,6 +68,7 @@
         }
         .preview-area {
             flex: 1;
+            min-height: 200px;
             border: 2px dashed #e1e4e8;
             border-radius: 8px;
             display: flex;
@@ -94,9 +96,9 @@
             padding: 12px 20px;
             background-color: #007bff;
             color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;            font-size: 1rem;
+            border: none;            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
             font-weight: 500;
             transition: all 0.2s;
             width: 100%;
@@ -123,6 +125,34 @@
             color: #8898aa; 
             font-size: 0.8rem;
         }
+
+        /* Адаптив для мобильных устройств */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.3rem;
+                margin-bottom: 15px;
+            }
+            .container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .panel {
+                padding: 15px;
+            }
+            textarea {
+                min-height: 150px;
+                font-size: 14px;
+            }            .preview-area {
+                min-height: 250px;
+            }
+            .btn {
+                padding: 14px 20px;
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -145,7 +175,8 @@
                 <span class="placeholder">Предпросмотр появится здесь</span>
                 <canvas id="previewCanvas" style="display: none;"></canvas>
             </div>
-            <button id="downloadBtn" class="btn" disabled>Скачать PNG</button>        </div>
+            <button id="downloadBtn" class="btn" disabled>Скачать PNG</button>
+        </div>
     </div>
 
     <script>
@@ -163,8 +194,7 @@
             if (!svgCode) {
                 previewCanvas.style.display = 'none';
                 placeholder.style.display = 'block';
-                downloadBtn.disabled = true;
-                dimensionsLabel.textContent = '';
+                downloadBtn.disabled = true;                dimensionsLabel.textContent = '';
                 isReady = false;
                 return;
             }
@@ -194,7 +224,8 @@
                 URL.revokeObjectURL(url);
             };
             
-            img.onerror = () => {                console.error('Ошибка парсинга SVG. Проверьте корректность кода.');
+            img.onerror = () => {
+                console.error('Ошибка парсинга SVG. Проверьте корректность кода.');
                 URL.revokeObjectURL(url);
             };
             
@@ -212,8 +243,7 @@
             // Эмулируем клик
             document.body.appendChild(link);
             link.click();
-            document.body.removeChild(link);
-        });
+            document.body.removeChild(link);        });
     </script>
 </body>
 </html>
