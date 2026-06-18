@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG в PNG Конвертер</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f7f9fc;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin: 0 0 20px 0;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            min-height: 0; /* Важно для корректного скролла внутри флекс-элементов */
+        }
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 20px;
+            min-height: 0;
+        }
+        .panel-header {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #555;
+            display: flex;
+            justify-content: space-between;            align-items: center;
+        }
+        textarea {
+            flex: 1;
+            width: 100%;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 13px;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s;
+            line-height: 1.5;
+        }
+        textarea:focus {
+            border-color: #007bff;
+        }
+        .preview-area {
+            flex: 1;
+            border: 2px dashed #e1e4e8;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fafbfc;
+            background-image: 
+                linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            overflow: auto;
+            position: relative;
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .btn {
+            margin-top: 16px;
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .btn:disabled {
+            background-color: #cbd3da;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .placeholder {
+            color: #8898aa;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .dimensions {
+            font-weight: normal; 
+            color: #8898aa; 
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Конвертер SVG в PNG</h1>
+    
+    <div class="container">
+        <!-- Левая панель: Ввод SVG -->
+        <div class="panel">
+            <div class="panel-header">SVG Код</div>
+            <textarea id="svgInput" placeholder="Вставьте ваш SVG код здесь... (например, <svg>...</svg>)"></textarea>
+        </div>
+        
+        <!-- Правая панель: Предпросмотр и скачивание -->
+        <div class="panel">
+            <div class="panel-header">
+                Предпросмотр
+                <span id="dimensions" class="dimensions"></span>
+            </div>
+            <div class="preview-area" id="previewArea">
+                <span class="placeholder">Предпросмотр появится здесь</span>
+                <canvas id="previewCanvas" style="display: none;"></canvas>
+            </div>
+            <button id="downloadBtn" class="btn" disabled>Скачать PNG</button>        </div>
+    </div>
+
+    <script>
+        const svgInput = document.getElementById('svgInput');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const dimensionsLabel = document.getElementById('dimensions');
+        const placeholder = document.querySelector('.placeholder');
+
+        let isReady = false;
+
+        svgInput.addEventListener('input', () => {
+            const svgCode = svgInput.value.trim();
+            
+            if (!svgCode) {
+                previewCanvas.style.display = 'none';
+                placeholder.style.display = 'block';
+                downloadBtn.disabled = true;
+                dimensionsLabel.textContent = '';
+                isReady = false;
+                return;
+            }
+
+            // Создаем Blob из SVG-кода
+            const blob = new Blob([svgCode], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            
+            const img = new Image();
+            img.onload = () => {
+                placeholder.style.display = 'none';
+                previewCanvas.style.display = 'block';
+                downloadBtn.disabled = false;
+                isReady = true;
+                
+                // Устанавливаем размеры canvas равными размерам изображения
+                previewCanvas.width = img.width;
+                previewCanvas.height = img.height;
+                dimensionsLabel.textContent = `${img.width} × ${img.height} px`;
+                
+                // Рисуем изображение на canvas
+                const ctx = previewCanvas.getContext('2d');
+                ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                ctx.drawImage(img, 0, 0);
+                
+                // Освобождаем память
+                URL.revokeObjectURL(url);
+            };
+            
+            img.onerror = () => {                console.error('Ошибка парсинга SVG. Проверьте корректность кода.');
+                URL.revokeObjectURL(url);
+            };
+            
+            img.src = url;
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (!isReady) return;
+            
+            // Создаем временную ссылку для скачивания
+            const link = document.createElement('a');
+            link.download = 'converted-image.png';
+            link.href = previewCanvas.toDataURL('image/png');
+            
+            // Эмулируем клик
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    </script>
+</body>
+</html>
